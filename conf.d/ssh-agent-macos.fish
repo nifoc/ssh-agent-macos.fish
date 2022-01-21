@@ -2,15 +2,13 @@ if test -z "$SSH_ENV"
     set -gx SSH_ENV "$HOME/.ssh/environment"
 end
 
-if test -f "$SSH_ENV"; and test -z "$SSH_AGENT_PID"
-    # Source existing $SSH_ENV
-    source "$SSH_ENV" >/dev/null
-
-    if test -z "$SSH_AGENT_PID"; or not pgrep "$SSH_AGENT_PID" >/dev/null
-        # Something is wrong with $SSH_ENV, let's restart ssh-agent
-        __ssh_agent_start
-    end
-else
-    # Start ssh-agent for the first time
+if not test -e "$SSH_ENV"
+    # Environment file does not exist at all
+    __ssh_agent_start
+else if test -e "$SSH_ENV"; and test -z "$SSH_AGENT_PID"
+    # Environment file exists but $SSH_AGENT_PID is not set
+    __ssh_agent_source
+else if not pgrep "$SSH_AGENT_PID"
+    # The process that $SSH_AGENT_PID references is not alive
     __ssh_agent_start
 end
